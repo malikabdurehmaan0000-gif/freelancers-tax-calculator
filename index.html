@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProRate - US Freelance Tax & Net Rate Engine 2026</title>
+    <meta name="description" content="Enterprise-grade freelance hourly rate, US self-employment tax, state tax, and platform overhead calculator.">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js for Visual Data -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg: #090d16;
+            --panel: #111827;
+            --border: #1f2937;
+            --accent: #6366f1;
+            --accent-hover: #4f46e5;
+            --text-main: #f9fafb;
+            --text-muted: #9ca3af;
+            --green: #10b981;
+            --red: #f43f5e;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background-color: var(--bg); color: var(--text-main); line-height: 1.6; padding: 40px 20px; }
+        
+        .container { max-width: 1000px; margin: 0 auto; }
+        
+        /* Header */
+        header { text-align: center; margin-bottom: 40px; }
+        .badge { background: rgba(99, 102, 241, 0.15); color: var(--accent); padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; border: 1px solid rgba(99, 102, 241, 0.3); }
+        h1 { font-size: 36px; font-weight: 700; margin: 15px 0 10px; letter-spacing: -0.5px; }
+        header p { color: var(--text-muted); font-size: 16px; }
+
+        /* Dashboard Layout */
+        .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 40px; }
+        @media (max-width: 850px) { .dashboard { grid-template-columns: 1fr; } }
+
+        .card { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 28px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .card-title { font-size: 18px; font-weight: 600; margin-bottom: 20px; color: var(--text-main); display: flex; align-items: center; justify-content: space-between; }
+
+        /* Inputs */
+        .input-group { margin-bottom: 18px; }
+        label { display: block; font-size: 13px; font-weight: 500; color: var(--text-muted); margin-bottom: 8px; }
+        .input-wrapper { position: relative; }
+        .input-wrapper span { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-weight: 600; }
+        input, select { width: 100%; background: #1a2332; border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px 12px 32px; color: #fff; font-size: 14px; outline: none; transition: all 0.2s; }
+        select { padding-left: 14px; }
+        input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); }
+
+        /* KPI Display */
+        .kpi-main { background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(16,185,129,0.05)); border: 1px solid rgba(99,102,241,0.3); border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 20px; }
+        .kpi-label { font-size: 13px; color: var(--text-muted); text-transform: uppercase; font-weight: 600; }
+        .kpi-value { font-size: 38px; font-weight: 700; color: var(--green); margin: 5px 0; }
+        .kpi-sub { font-size: 12px; color: var(--text-muted); }
+
+        /* Breakdown Table */
+        .breakdown-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+        .breakdown-row:last-child { border-bottom: none; }
+        .text-red { color: var(--red); }
+        .text-green { color: var(--green); }
+
+        /* Chart Wrapper */
+        .chart-container { position: relative; height: 180px; width: 100%; margin-top: 20px; }
+
+        /* Actions */
+        .btn-action { width: 100%; background: var(--accent); color: #fff; border: none; padding: 12px; border-radius: 10px; font-weight: 600; cursor: pointer; transition: background 0.2s; margin-top: 15px; }
+        .btn-action:hover { background: var(--accent-hover); }
+
+        /* SEO Content */
+        .seo-section { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 35px; color: var(--text-muted); line-height: 1.8; }
+        .seo-section h2 { color: var(--text-main); font-size: 22px; margin: 20px 0 10px; }
+        .seo-section p { margin-bottom: 15px; font-size: 15px; }
+        .seo-section ul { padding-left: 20px; margin-bottom: 20px; }
+
+        @media print {
+            body { background: #fff; color: #000; }
+            .seo-section, .btn-action, header p { display: none; }
+            .card { border: 1px solid #ccc; box-shadow: none; background: #fff; color: #000; }
+            input, select { border: 1px solid #ccc; background: #fff; color: #000; }
+            .kpi-value { color: #000; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <span class="badge">ProRate Intelligence Engine</span>
+        <h1>US Freelance Rate & Tax Calculator</h1>
+        <p>Precision financial forecasting for contractors, freelancers & agencies.</p>
+    </header>
+
+    <div class="dashboard">
+        <!-- Input Form Panel -->
+        <div class="card">
+            <div class="card-title">Financial Targets</div>
+            
+            <div class="input-group">
+                <label>Desired Net Take-Home Pay ($/hr)</label>
+                <div class="input-wrapper">
+                    <span>$</span>
+                    <input type="number" id="desiredRate" value="45" oninput="updateCalculator()">
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>Billable Hours Per Week</label>
+                <div class="input-wrapper">
+                    <span>#</span>
+                    <input type="number" id="hoursWeek" value="30" oninput="updateCalculator()">
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>Platform / Processing Fee</label>
+                <select id="platformFee" onchange="updateCalculator()">
+                    <option value="0">Direct Wire Transfer / Invoice (0%)</option>
+                    <option value="2.9" selected>Stripe / Credit Card (~2.9%)</option>
+                    <option value="5">Upwork Top Rated (5%)</option>
+                    <option value="10">Standard Platform Fee (10%)</option>
+                    <option value="20">Fiverr / Upwork Starter (20%)</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label>US Self-Employment Tax Rate (%)</label>
+                <div class="input-wrapper">
+                    <span>%</span>
+                    <input type="number" id="seTax" value="15.3" step="0.1" oninput="updateCalculator()">
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>Estimated State & Federal Tax (%)</label>
+                <div class="input-wrapper">
+                    <span>%</span>
+                    <input type="number" id="incomeTax" value="12" step="0.1" oninput="updateCalculator()">
+                </div>
+            </div>
+        </div>
+
+        <!-- Output Analytics Panel -->
+        <div class="card">
+            <div class="card-title">Invoice Output Summary</div>
+
+            <div class="kpi-main">
+                <div class="kpi-label">Minimum Target Client Rate</div>
+                <div class="kpi-value" id="finalHourlyRate">$0.00</div>
+                <div class="kpi-sub">Quote this rate on invoices to meet take-home goals</div>
+            </div>
+
+            <div class="breakdown-row">
+                <span>Monthly Gross Invoiced:</span>
+                <strong id="monthlyGross" class="text-green">$0.00</strong>
+            </div>
+            <div class="breakdown-row">
+                <span>SE Tax & Platform Deductions:</span>
+                <strong id="totalDeductions" class="text-red">-$0.00</strong>
+            </div>
+            <div class="breakdown-row">
+                <span>Net Monthly Take-Home:</span>
+                <strong id="monthlyNet">$0.00</strong>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="incomeChart"></canvas>
+            </div>
+
+            <button class="btn-action" onclick="window.print()">Export Financial Summary (PDF)</button>
+        </div>
+    </div>
+
+    <!-- SEO Content for Ranking -->
+    <div class="seo-section">
+        <h2>Navigating US Self-Employment Taxes in 2026</h2>
+        <p>Operating as an independent contractor or 1099 freelancer in the United States requires a clear understanding of overhead burdens. Unlike W-2 employees where the employer pays half of Medicare and Social Security taxes, self-employed individuals are responsible for the entire 15.3% Self-Employment (SE) tax contribution.</p>
+
+        <h2>How This Calculator Optimizes Your Invoicing</h2>
+        <p>Simply charging your baseline hourly living cost leads to severe under-billing. This enterprise engine automatically recalculates your invoices by compounding:</p>
+        <ul>
+            <li><strong>FICA Contributions:</strong> 12.4% Social Security + 2.9% Medicare.</li>
+            <li><strong>Merchant Processing Overhead:</strong> Stripe, PayPal, and freelance marketplace commissions.</li>
+            <li><strong>Adjusted Federal/State Brackets:</strong> Factoring in state-level income obligations.</li>
+        </ul>
+        <p>Use the printable summary directly for quarterly tax estimates and contract negotiating benchmarks.</p>
+    </div>
+</div>
+
+<script>
+let incomeChart;
+
+function initChart() {
+    const ctx = document.getElementById('incomeChart').getContext('2d');
+    incomeChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Take-Home Net', 'Taxes & Fees'],
+            datasets: [{
+                data: [70, 30],
+                backgroundColor: ['#10b981', '#f43f5e'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom', labels: { color: '#9ca3af', font: { family: 'Plus Jakarta Sans' } } }
+            },
+            cutout: '75%'
+        }
+    });
+}
+
+function updateCalculator() {
+    let desiredRate = parseFloat(document.getElementById('desiredRate').value) || 0;
+    let hoursWeek = parseFloat(document.getElementById('hoursWeek').value) || 0;
+    let platformFeePct = parseFloat(document.getElementById('platformFee').value) || 0;
+    let seTaxPct = parseFloat(document.getElementById('seTax').value) || 0;
+    let incomeTaxPct = parseFloat(document.getElementById('incomeTax').value) || 0;
+
+    let totalTaxPct = (seTaxPct + incomeTaxPct + platformFeePct) / 100;
+    let requiredRate = totalTaxPct < 1 ? desiredRate / (1 - totalTaxPct) : desiredRate;
+
+    let weeklyGross = requiredRate * hoursWeek;
+    let monthlyGross = weeklyGross * 4.33;
+    let monthlyNet = (desiredRate * hoursWeek) * 4.33;
+    let monthlyDeductions = monthlyGross - monthlyNet;
+
+    // Updates
+    document.getElementById('finalHourlyRate').innerText = '$' + requiredRate.toFixed(2) + '/hr';
+    document.getElementById('monthlyGross').innerText = '$' + monthlyGross.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    document.getElementById('totalDeductions').innerText = '-$' + monthlyDeductions.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    document.getElementById('monthlyNet').innerText = '$' + monthlyNet.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+    // Chart Update
+    if (incomeChart) {
+        incomeChart.data.datasets[0].data = [monthlyNet, monthlyDeductions];
+        incomeChart.update();
+    }
+}
+
+window.onload = function() {
+    initChart();
+    updateCalculator();
+};
+</script>
+
+</body>
+</html>
