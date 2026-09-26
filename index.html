@@ -4,313 +4,173 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ProRate - US Freelance Tax & Net Rate Engine 2026</title>
-    <meta name="description" content="Enterprise-grade freelance hourly rate, US self-employment tax, state tax, and platform overhead calculator.">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        :root {
-            --bg: #090d16;
-            --panel: #111827;
-            --border: #1f2937;
-            --accent: #6366f1;
-            --accent-hover: #4f46e5;
-            --text-main: #f9fafb;
-            --text-muted: #9ca3af;
-            --green: #10b981;
-            --red: #f43f5e;
+    <meta name="description" content="Enterprise-grade freelance hourly rate, net take-home pay, and US self-employment tax calculator for contractors and agencies.">
+    
+    <!-- SVG Favicon (Browser Tab & Search Logo) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%236366f1'/><text y='72' x='18' font-size='70' fill='white' font-family='sans-serif' font-weight='bold'>%24</text></svg>">
+
+    <!-- Open Graph Meta Tags (Social Media & Search Preview) -->
+    <meta property="og:title" content="ProRate - US Freelance Tax & Net Rate Engine">
+    <meta property="og:description" content="Precision financial forecasting for contractors, freelancers & agencies.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://freelancers-tax-calculator.vercel.app/">
+    <meta property="og:image" content="https://freelancers-tax-calculator.vercel.app/og-image.png">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        panel: '#0f172a',
+                        border: '#1e293b',
+                        accent: '#6366f1',
+                        'accent-hover': '#4f46e5',
+                        'text-muted': '#94a3b8',
+                    }
+                }
+            }
         }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { background-color: var(--bg); color: var(--text-main); line-height: 1.6; padding: 30px 20px 20px; min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; }
-        
-        .container { max-width: 1000px; margin: 0 auto; width: 100%; }
-        
-        /* Header & Built-in Vector Logo */
-        header { text-align: center; margin-bottom: 40px; display: flex; flex-direction: column; align-items: center; }
-        
-        .brand-logo {
-            display: inline-flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 12px;
-            text-decoration: none;
-        }
-        
-        .logo-icon {
-            width: 46px;
-            height: 46px;
-            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.35);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-        }
-
-        .logo-icon svg {
-            width: 26px;
-            height: 26px;
-            fill: none;
-            stroke: #ffffff;
-            stroke-width: 2.5;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-
-        .logo-text {
-            font-size: 28px;
-            font-weight: 800;
-            color: #ffffff;
-            letter-spacing: -0.5px;
-        }
-
-        .logo-text span {
-            color: var(--accent);
-        }
-
-        .badge { background: rgba(99, 102, 241, 0.15); color: var(--accent); padding: 5px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; border: 1px solid rgba(99, 102, 241, 0.3); margin-bottom: 12px; }
-        h1 { font-size: 32px; font-weight: 700; margin: 5px 0 8px; letter-spacing: -0.5px; }
-        header p { color: var(--text-muted); font-size: 15px; }
-
-        .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 40px; }
-        @media (max-width: 850px) { .dashboard { grid-template-columns: 1fr; } }
-
-        .card { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 28px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-        .card-title { font-size: 18px; font-weight: 600; margin-bottom: 20px; color: var(--text-main); display: flex; align-items: center; justify-content: space-between; }
-
-        .input-group { margin-bottom: 18px; }
-        label { display: block; font-size: 13px; font-weight: 500; color: var(--text-muted); margin-bottom: 8px; }
-        .input-wrapper { position: relative; }
-        .input-wrapper span { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-weight: 600; }
-        input, select { width: 100%; background: #1a2332; border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px 12px 32px; color: #fff; font-size: 14px; outline: none; transition: all 0.2s; }
-        select { padding-left: 14px; }
-        input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); }
-
-        .kpi-main { background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(16,185,129,0.05)); border: 1px solid rgba(99,102,241,0.3); border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 20px; }
-        .kpi-label { font-size: 13px; color: var(--text-muted); text-transform: uppercase; font-weight: 600; }
-        .kpi-value { font-size: 38px; font-weight: 700; color: var(--green); margin: 5px 0; }
-        .kpi-sub { font-size: 12px; color: var(--text-muted); }
-
-        .breakdown-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
-        .breakdown-row:last-child { border-bottom: none; }
-        .text-red { color: var(--red); }
-        .text-green { color: var(--green); }
-
-        .chart-container { position: relative; height: 180px; width: 100%; margin-top: 20px; }
-
-        .btn-action { width: 100%; background: var(--accent); color: #fff; border: none; padding: 12px; border-radius: 10px; font-weight: 600; cursor: pointer; transition: background 0.2s; margin-top: 15px; }
-        .btn-action:hover { background: var(--accent-hover); }
-
-        .seo-section { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 35px; color: var(--text-muted); line-height: 1.8; margin-bottom: 40px; }
-        .seo-section h2 { color: var(--text-main); font-size: 22px; margin: 20px 0 10px; }
-        .seo-section p { margin-bottom: 15px; font-size: 15px; }
-
-        /* Footer & Modals */
-        footer { border-top: 1px solid var(--border); padding-top: 25px; text-align: center; font-size: 14px; color: var(--text-muted); margin-top: auto; }
-        .footer-links { margin-bottom: 12px; }
-        .footer-links a { color: var(--text-muted); text-decoration: none; margin: 0 12px; cursor: pointer; transition: color 0.2s; }
-        .footer-links a:hover { color: var(--accent); }
-
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; padding: 20px; }
-        .modal-content { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; max-width: 600px; width: 100%; max-height: 80vh; overflow-y: auto; padding: 30px; position: relative; color: var(--text-muted); line-height: 1.7; }
-        .modal-content h3 { color: var(--text-main); margin-bottom: 15px; font-size: 20px; }
-        .close-btn { position: absolute; top: 15px; right: 20px; color: var(--text-muted); font-size: 24px; cursor: pointer; border: none; background: none; }
-    </style>
+    </script>
 </head>
-<body>
+<body class="bg-[#090d16] text-white min-h-screen flex flex-col justify-between font-sans antialiased">
 
-<div class="container">
-    <header>
-        <!-- Pure CSS/SVG Code Logo (No External Image Needed) -->
-        <div class="brand-logo">
-            <div class="logo-icon">
-                <svg viewBox="0 0 24 24">
-                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                </svg>
+    <!-- Navigation Header -->
+    <header class="border-b border-border bg-[#0b0f19]/80 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                    <span class="font-black text-xl text-white">$</span>
+                </div>
+                <span class="font-bold text-lg tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">ProRate <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-semibold uppercase tracking-wider">Engine</span></span>
             </div>
-            <div class="logo-text">ProRate<span>Engine</span></div>
+            <a href="https://github.com" target="_blank" class="text-xs text-text-muted hover:text-white transition-colors border border-border px-3 py-1.5 rounded-lg bg-panel">GitHub Repo</a>
         </div>
-        
-        <span class="badge">Professional Rate & Tax Engine</span>
-        <h1>US Freelance Rate & Tax Calculator</h1>
-        <p>Precision financial forecasting for contractors, freelancers & agencies.</p>
     </header>
 
-    <div class="dashboard">
-        <div class="card">
-            <div class="card-title">Financial Targets</div>
-            
-            <div class="input-group">
-                <label>Desired Net Take-Home Pay ($/hr)</label>
-                <div class="input-wrapper">
-                    <span>$</span>
-                    <input type="number" id="desiredRate" value="45" oninput="updateCalculator()">
+    <!-- Main App Content -->
+    <main class="max-w-5xl mx-auto px-4 py-10 w-full">
+        <div class="text-center mb-10">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-medium mb-3">
+                <span>PRORATE INTELLIGENCE ENGINE</span>
+            </div>
+            <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white mb-3">US Freelance Rate & Tax Calculator</h1>
+            <p class="text-text-muted text-sm sm:text-base max-w-xl mx-auto">Precision financial forecasting for contractors, freelancers & agencies.</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6">
+            <!-- Left Panel: Financial Inputs -->
+            <div class="bg-panel border border-border rounded-2xl p-6 shadow-xl">
+                <h2 class="text-lg font-bold text-white mb-5 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                    Financial Targets
+                </h2>
+                
+                <form class="space-y-4 text-sm" oninput="calculateRate()">
+                    <div>
+                        <label class="block text-text-muted mb-1.5 font-medium">Desired Net Take-Home Pay ($/hr)</label>
+                        <div class="relative">
+                            <span class="absolute left-3.5 top-2.5 text-text-muted">$</span>
+                            <input type="number" id="netPay" value="45" class="w-full bg-[#090d16] border border-border rounded-xl py-2.5 pl-8 pr-4 text-white font-semibold focus:outline-none focus:border-indigo-500 transition-colors">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-text-muted mb-1.5 font-medium">Billable Hours Per Week</label>
+                        <div class="relative">
+                            <span class="absolute left-3.5 top-2.5 text-text-muted">#</span>
+                            <input type="number" id="billableHours" value="30" class="w-full bg-[#090d16] border border-border rounded-xl py-2.5 pl-8 pr-4 text-white font-semibold focus:outline-none focus:border-indigo-500 transition-colors">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-text-muted mb-1.5 font-medium">Platform / Processing Fee</label>
+                        <select id="platformFee" class="w-full bg-[#090d16] border border-border rounded-xl py-2.5 px-3 text-white font-medium focus:outline-none focus:border-indigo-500 transition-colors">
+                            <option value="0.029">Stripe / Credit Card (~2.9%)</option>
+                            <option value="0.10">Upwork / Fiverr (~10%)</option>
+                            <option value="0.20">High-Fee Agency (~20%)</option>
+                            <option value="0.0">Direct Bank Transfer (0%)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-text-muted mb-1.5 font-medium">US Self-Employment Tax Rate (%)</label>
+                        <div class="relative">
+                            <span class="absolute left-3.5 top-2.5 text-text-muted">%</span>
+                            <input type="number" id="seTax" value="15.3" step="0.1" class="w-full bg-[#090d16] border border-border rounded-xl py-2.5 pl-8 pr-4 text-white font-semibold focus:outline-none focus:border-indigo-500 transition-colors">
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Right Panel: Financial Output -->
+            <div class="bg-panel border border-border rounded-2xl p-6 shadow-xl flex flex-col justify-between">
+                <div>
+                    <h2 class="text-lg font-bold text-white mb-5 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        Invoice Output Summary
+                    </h2>
+
+                    <div class="bg-[#090d16] border border-emerald-500/20 rounded-xl p-5 mb-5 text-center">
+                        <span class="text-xs uppercase tracking-wider text-text-muted font-bold block mb-1">Minimum Target Client Rate</span>
+                        <div id="targetRate" class="text-3xl sm:text-4xl font-extrabold text-emerald-400">$64.47/hr</div>
+                        <p class="text-xs text-text-muted mt-1">Quote this rate on invoices to meet take-home goals</p>
+                    </div>
+
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between py-2 border-b border-border/50">
+                            <span class="text-text-muted">Monthly Gross Invoiced:</span>
+                            <span id="grossInvoiced" class="font-bold text-emerald-400">$8,374.64</span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b border-border/50">
+                            <span class="text-text-muted">SE Tax & Platform Deductions:</span>
+                            <span id="totalDeductions" class="font-bold text-rose-400">-$2,529.14</span>
+                        </div>
+                        <div class="flex justify-between py-2 font-bold text-base">
+                            <span class="text-white">Net Monthly Take-Home:</span>
+                            <span id="netMonthly" class="text-white">$5,845.50</span>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <div class="input-group">
-                <label>Billable Hours Per Week</label>
-                <div class="input-wrapper">
-                    <span>#</span>
-                    <input type="number" id="hoursWeek" value="30" oninput="updateCalculator()">
-                </div>
-            </div>
-
-            <div class="input-group">
-                <label>Platform / Processing Fee</label>
-                <select id="platformFee" onchange="updateCalculator()">
-                    <option value="0">Direct Wire Transfer / Invoice (0%)</option>
-                    <option value="2.9" selected>Stripe / Credit Card (~2.9%)</option>
-                    <option value="5">Upwork Top Rated (5%)</option>
-                    <option value="10">Standard Platform Fee (10%)</option>
-                    <option value="20">Fiverr / Upwork Starter (20%)</option>
-                </select>
-            </div>
-
-            <div class="input-group">
-                <label>US Self-Employment Tax Rate (%)</label>
-                <div class="input-wrapper">
-                    <span>%</span>
-                    <input type="number" id="seTax" value="15.3" step="0.1" oninput="updateCalculator()">
-                </div>
-            </div>
-
-            <div class="input-group">
-                <label>Estimated State & Federal Tax (%)</label>
-                <div class="input-wrapper">
-                    <span>%</span>
-                    <input type="number" id="incomeTax" value="12" step="0.1" oninput="updateCalculator()">
+                <div class="mt-6 pt-4 border-t border-border text-xs text-text-muted text-center">
+                    Calculations include standard 52-week operating timeline assumptions.
                 </div>
             </div>
         </div>
+    </main>
 
-        <div class="card">
-            <div class="card-title">Invoice Output Summary</div>
+    <!-- Footer -->
+    <footer class="border-t border-border py-6 text-center text-xs text-text-muted">
+        <p>&copy; 2026 ProRate Intelligence Engine. All rights reserved.</p>
+    </footer>
 
-            <div class="kpi-main">
-                <div class="kpi-label">Minimum Target Client Rate</div>
-                <div class="kpi-value" id="finalHourlyRate">$0.00</div>
-                <div class="kpi-sub">Quote this rate on invoices to meet take-home goals</div>
-            </div>
+    <!-- Calculation Engine JS -->
+    <script>
+        function calculateRate() {
+            const netPay = parseFloat(document.getElementById('netPay').value) || 0;
+            const hours = parseFloat(document.getElementById('billableHours').value) || 1;
+            const platformFee = parseFloat(document.getElementById('platformFee').value) || 0;
+            const seTax = (parseFloat(document.getElementById('seTax').value) || 0) / 100;
 
-            <div class="breakdown-row">
-                <span>Monthly Gross Invoiced:</span>
-                <strong id="monthlyGross" class="text-green">$0.00</strong>
-            </div>
-            <div class="breakdown-row">
-                <span>SE Tax & Platform Deductions:</span>
-                <strong id="totalDeductions" class="text-red">-$0.00</strong>
-            </div>
-            <div class="breakdown-row">
-                <span>Net Monthly Take-Home:</span>
-                <strong id="monthlyNet">$0.00</strong>
-            </div>
+            // Total multiplier for fees & SE tax
+            const totalDeductionMultiplier = platformFee + seTax;
+            const requiredGrossRate = netPay / (1 - totalDeductionMultiplier);
 
-            <div class="chart-container">
-                <canvas id="incomeChart"></canvas>
-            </div>
+            const weeklyGross = requiredGrossRate * hours;
+            const monthlyGross = (weeklyGross * 52) / 12;
+            const monthlyNet = ((netPay * hours) * 52) / 12;
+            const monthlyDeductions = monthlyGross - monthlyNet;
 
-            <button class="btn-action" onclick="window.print()">Export Financial Summary (PDF)</button>
-        </div>
-    </div>
-
-    <div class="seo-section">
-        <h2>Navigating US Self-Employment Taxes in 2026</h2>
-        <p>Operating as an independent contractor or 1099 freelancer in the United States requires a clear understanding of overhead burdens. Unlike W-2 employees where the employer pays half of Medicare and Social Security taxes, self-employed individuals are responsible for the entire 15.3% Self-Employment (SE) tax contribution.</p>
-
-        <h2>How This Calculator Optimizes Your Invoicing</h2>
-        <p>Simply charging your baseline hourly living cost leads to severe under-billing. This enterprise engine automatically recalculates your invoices by compounding FICA contributions, merchant processing overhead, and adjusted federal/state brackets.</p>
-    </div>
-</div>
-
-<footer>
-    <div class="footer-links">
-        <a onclick="openModal('privacy')">Privacy Policy</a> | 
-        <a onclick="openModal('terms')">Terms of Service</a> | 
-        <a onclick="openModal('about')">About Us</a> | 
-        <a onclick="openModal('contact')">Contact Us</a>
-    </div>
-    <p>&copy; 2026 ProRate Engine. All Rights Reserved.</p>
-</footer>
-
-<!-- Modals -->
-<div id="modal" class="modal">
-    <div class="modal-content">
-        <button class="close-btn" onclick="closeModal()">&times;</button>
-        <div id="modal-body"></div>
-    </div>
-</div>
-
-<script>
-let incomeChart;
-
-function initChart() {
-    const ctx = document.getElementById('incomeChart').getContext('2d');
-    incomeChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Take-Home Net', 'Taxes & Fees'],
-            datasets: [{ data: [70, 30], backgroundColor: ['#10b981', '#f43f5e'], borderWidth: 0 }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af', font: { family: 'Plus Jakarta Sans' } } } },
-            cutout: '75%'
+            document.getElementById('targetRate').innerText = `$${requiredGrossRate.toFixed(2)}/hr`;
+            document.getElementById('grossInvoiced').innerText = `$${monthlyGross.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('totalDeductions').innerText = `-$${monthlyDeductions.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('netMonthly').innerText = `$${monthlyNet.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
         }
-    });
-}
 
-function updateCalculator() {
-    let desiredRate = parseFloat(document.getElementById('desiredRate').value) || 0;
-    let hoursWeek = parseFloat(document.getElementById('hoursWeek').value) || 0;
-    let platformFeePct = parseFloat(document.getElementById('platformFee').value) || 0;
-    let seTaxPct = parseFloat(document.getElementById('seTax').value) || 0;
-    let incomeTaxPct = parseFloat(document.getElementById('incomeTax').value) || 0;
-
-    let totalTaxPct = (seTaxPct + incomeTaxPct + platformFeePct) / 100;
-    let requiredRate = totalTaxPct < 1 ? desiredRate / (1 - totalTaxPct) : desiredRate;
-
-    let weeklyGross = requiredRate * hoursWeek;
-    let monthlyGross = weeklyGross * 4.33;
-    let monthlyNet = (desiredRate * hoursWeek) * 4.33;
-    let monthlyDeductions = monthlyGross - monthlyNet;
-
-    document.getElementById('finalHourlyRate').innerText = '$' + requiredRate.toFixed(2) + '/hr';
-    document.getElementById('monthlyGross').innerText = '$' + monthlyGross.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-    document.getElementById('totalDeductions').innerText = '-$' + monthlyDeductions.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-    document.getElementById('monthlyNet').innerText = '$' + monthlyNet.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-
-    if (incomeChart) {
-        incomeChart.data.datasets[0].data = [monthlyNet, monthlyDeductions];
-        incomeChart.update();
-    }
-}
-
-function openModal(type) {
-    let body = document.getElementById('modal-body');
-    if(type === 'privacy') {
-        body.innerHTML = '<h3>Privacy Policy</h3><p>We respect your privacy. This tool runs entirely in your web browser. We do not store, collect, or transmit any financial data, hourly rates, or calculations entered on this website. All calculations are executed locally on your device.</p>';
-    } else if(type === 'terms') {
-        body.innerHTML = '<h3>Terms of Service</h3><p>This calculator is provided for informational and estimation purposes only. It does not constitute formal legal, tax, or financial advice. Please consult a qualified CPA or certified tax professional for official tax filings.</p>';
-    } else if(type === 'about') {
-        body.innerHTML = '<h3>About ProRate</h3><p>ProRate is a utility engine built to help freelancers, contractors, and agency owners calculate accurate billing rates by accounting for platform fees and US self-employment tax liabilities.</p>';
-    } else if(type === 'contact') {
-        body.innerHTML = '<h3>Contact Us</h3><p>For inquiries, feedback, or support, please reach out via email at: <strong>prorate.calculator.official@gmail.com</strong></p>';
-    }
-    document.getElementById('modal').style.display = 'flex';
-}
-
-function closeModal() {
-    document.getElementById('modal').style.display = 'none';
-}
-
-window.onload = function() {
-    initChart();
-    updateCalculator();
-};
-</script>
-
+        // Initialize on load
+        calculateRate();
+    </script>
 </body>
 </html>
